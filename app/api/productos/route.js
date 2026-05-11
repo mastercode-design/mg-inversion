@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { getProducts } from '@/lib/kv';
+import { kv } from '@vercel/kv';
 
 export async function GET() {
-  const products = await getProducts();
-  return NextResponse.json(products);
+  const productos = await kv.get('productos') || [];
+  return NextResponse.json(productos);
 }
