@@ -7,9 +7,10 @@ export async function POST(request) {
     const file = formData.get('file');
     
     if (!file) {
-      return NextResponse.json({ success: false, error: 'No file' }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'No se recibió archivo' }, { status: 400 });
     }
     
+    // Si Blob no está conectado, esta línea falla
     const blob = await put(file.name, file, {
       access: 'public',
     });
@@ -17,7 +18,10 @@ export async function POST(request) {
     return NextResponse.json({ success: true, url: blob.url });
     
   } catch (error) {
-    console.error('Error upload:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    console.error('ERROR BLOB:', error.message);
+    return NextResponse.json({ 
+      success: false, 
+      error: `Blob falló: ${error.message}` 
+    }, { status: 500 });
   }
 }
