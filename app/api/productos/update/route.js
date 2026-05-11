@@ -1,15 +1,29 @@
 import { NextResponse } from 'next/server';
 import { kv } from '@vercel/kv';
-import { getProducts } from '@/lib/kv';
 
-export async function POST(request) {
-  const updatedProduct = await request.json();
-  let products = await getProducts();
-  
-  products = products.map(p => 
-    p.id === updatedProduct.id ? { ...updatedProduct, price: Number(updatedProduct.price) } : p
-  );
-  
-  await kv.set('products', products);
-  return NextResponse.json({ success: true });
+export async function PUT(request, { params }) {
+  try {
+    const { id } = await params;
+    const idNum = Number(id);
+    const nuevosDatos = await request.json();
+    
+    let productos = await kv.get('productos') || [];
+    const index = productos.findIndex(p => p.id === idNum);
+    
+    if (index === -1) return NextResponse.json({ error: 'No encontrado' }, { status: 404 });
+    
+    productos[index] = {
+  ...productos[index],
+      nombre: nuevosDatos.nombre || productos[index].nombre,
+      precio: nuevosDatos.precio? parseFloat(nuevosDatos.precio) : productos[index].precio,
+      imagen: nuevosDatos.imagen || productos[index].imagen,
+      stock: nuevosDatos.stock!== undefined? parseInt(nuevosDatos.stock) : productos[index].stock,
+      categoria: nuevosDatos.categoria || productos[index].categoria
+    };
+    
+    await kv.set('productos', productos);
+    return NextResponse.json({ success: true, producto: productos[index] });
+  } catch (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 }
