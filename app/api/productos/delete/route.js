@@ -1,8 +1,29 @@
 import { NextResponse } from 'next/server';
-import { deleteProduct } from '@/lib/kv';
+import { kv } from '@vercel/kv';
+import { del } from '@vercel/blob';
 
-export async function POST(request) {
-  const { id } = await request.json();
-  await deleteProduct(id);
-  return NextResponse.json({ success: true });
+export async function DELETE(request, { params }) {
+  try {
+    const { id } = await params;
+    const idNum = Number(id);
+    
+    let productos = await kv.get('productos') || [];
+    const prod = productos.find(p => p.id === idNum);
+    
+    // Borra imagen de Blob si existe
+    if (prod?.imagen?.includes('vercel-storage.com')) {
+      try {
+        await del(prod.imagen);
+      } catch (e) { 
+        console.log('No se pudo borrar imagen:', e) 
+      }
+    }
+    
+    productos = productos.filter(p => p.id!== idNum);
+    await kv.set('productos', productos);
+    
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 }

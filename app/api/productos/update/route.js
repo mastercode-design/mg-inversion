@@ -10,10 +10,12 @@ export async function PUT(request, { params }) {
     let productos = await kv.get('productos') || [];
     const index = productos.findIndex(p => p.id === idNum);
     
-    if (index === -1) return NextResponse.json({ error: 'No encontrado' }, { status: 404 });
+    if (index === -1) {
+      return NextResponse.json({ error: 'Producto no encontrado' }, { status: 404 });
+    }
     
     productos[index] = {
-  ...productos[index],
+ ...productos[index],
       nombre: nuevosDatos.nombre || productos[index].nombre,
       precio: nuevosDatos.precio? parseFloat(nuevosDatos.precio) : productos[index].precio,
       imagen: nuevosDatos.imagen || productos[index].imagen,
